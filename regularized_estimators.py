@@ -4,7 +4,8 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
-
+# regression methods computations
+from linear_regression import compute_linear_regression
 
 
 # data import
