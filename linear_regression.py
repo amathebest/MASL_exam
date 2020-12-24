@@ -14,6 +14,4 @@ def compute_linear_regression(X_train, X_test, y_train, y_test):
     y_test_predicted = lin_reg.predict(X_test)
     test_set_mse = mean_squared_error(y_test, y_test_predicted)
 
-
-
     return train_set_mse, test_set_mse

@@ -6,6 +6,7 @@ from sklearn.preprocessing import StandardScaler
 
 # regression methods computations
 from linear_regression import compute_linear_regression
+from ridge_regression import compute_best_lambda_ridge, compute_ridge_regression
 
 
 # data import
@@ -26,11 +27,13 @@ X_train = scaler.transform(X_train)
 X_test = scaler.transform(X_test)
 
 # applying linear regression model and obtaining mse on train and test set
-training_set_mse, test_set_mse = compute_linear_regression(X_train, X_test, y_train, y_test)
+training_set_mse_LR, test_set_mse_LR = compute_linear_regression(X_train, X_test, y_train, y_test)
 
+# applying ridge regression model with optimal lambda and obtaining mse on train and test set
+optimal_lambda = compute_best_lambda_ridge(X_train, y_train)
+training_set_mse_RR, test_set_mse_RR = compute_ridge_regression(X_train, X_test, y_train, y_test, optimal_lambda)
 
-
-
-
+print(training_set_mse_LR, test_set_mse_LR)
+print(training_set_mse_RR, test_set_mse_RR)
 
 #
