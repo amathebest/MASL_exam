@@ -5,9 +5,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
 # regression methods computations
-from regression_methods import compute_linear_regression, compute_ridge_regression
-from lasso_regression import compute_lasso_regression
-from elastic_net_regression import compute_elastic_net_regression
+from regression_methods import linear_regression, ridge_regression, lasso_regression, elastic_net_regression
 
 # data import
 data = pd.read_csv('housing.csv', header = None)
@@ -31,24 +29,25 @@ if True:
 
     # applying linear regression model and obtaining mse on train and test set
     print("Computing Linear Regression...")
-    training_linear_mse, test_linear_mse = compute_linear_regression(X_train, X_test, y_train, y_test, True)
-
-    # applying ridge regression model with optimal lambda and obtaining mse on train and test set
-    print("\nComputing Ridge Regression with cross-validation...")
-    training_ridge_mse, test_ridge_mse = compute_ridge_regression(X_train, X_test, y_train, y_test, outputs)
-
-
-else:
+    training_linear_mse, test_linear_mse = linear_regression(X_train, X_test, y_train, y_test, True)
 
 
     # applying lasso regression model with optimal lambda and obtaining mse on train and test set
     print("\nComputing Lasso with cross-validation...")
-    training_lasso_mse, test_lasso_mse = compute_lasso_regression(X_train, X_test, y_train, y_test)
+    training_lasso_mse, test_lasso_mse = lasso_regression(X_train, X_test, y_train, y_test, True)
+
+else:
+
+
+    # applying ridge regression model with optimal lambda and obtaining mse on train and test set
+    print("\nComputing Ridge Regression with cross-validation...")
+    training_ridge_mse, test_ridge_mse = ridge_regression(X_train, X_test, y_train, y_test, outputs)
+
 
 
     # applying elastic net regression model with optimal lambda and obtaining mse on train and test set
     print("Computing Elastic Net with cross-validation...")
-    training_elastic_net_mse, test_elastic_net_mse = compute_elastic_net_regression(X_train, X_test, y_train, y_test)
+    training_elastic_net_mse, test_elastic_net_mse = elastic_net_regression(X_train, X_test, y_train, y_test)
 
 
 
