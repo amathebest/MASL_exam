@@ -17,38 +17,38 @@ X = data.drop(['MEDV'], axis = 1)
 y = data['MEDV']
 
 # separating the dataset into training set and test set (with seed)
-X_train, X_test, y_train, y_test = train_test_split(X, y, train_size = 2*(1/3), random_state = 0)
+X_train, X_test, y_train, y_test = train_test_split(X, y, train_size = 0.67, random_state = 123)
 
 # scaling the covariates in order to make them uniform
-scaler = StandardScaler().fit(X_train)
-X_train = scaler.transform(X_train)
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
 if True:
     outputs = True
+    normalization = False
 
     # applying linear regression model and obtaining mse on train and test set
     print("Computing Linear Regression...")
-    training_linear_mse, test_linear_mse = linear_regression(X_train, X_test, y_train, y_test, True)
-
-
-    # applying lasso regression model with optimal lambda and obtaining mse on train and test set
-    print("\nComputing Lasso with cross-validation...")
-    training_lasso_mse, test_lasso_mse = lasso_regression(X_train, X_test, y_train, y_test, True)
-
-else:
+    training_linear_mse, test_linear_mse = linear_regression(X_train, X_test, y_train, y_test, outputs, normalization)
 
 
     # applying ridge regression model with optimal lambda and obtaining mse on train and test set
     print("\nComputing Ridge Regression with cross-validation...")
-    training_ridge_mse, test_ridge_mse = ridge_regression(X_train, X_test, y_train, y_test, outputs)
+    training_ridge_mse, test_ridge_mse = ridge_regression(X_train, X_test, y_train, y_test, outputs, normalization)
 
+    
+    # applying lasso regression model with optimal lambda and obtaining mse on train and test set
+    print("\nComputing Lasso with cross-validation...")
+    training_lasso_mse, test_lasso_mse = lasso_regression(X_train, X_test, y_train, y_test, outputs, normalization)
+
+
+else:
 
 
     # applying elastic net regression model with optimal lambda and obtaining mse on train and test set
     print("Computing Elastic Net with cross-validation...")
     training_elastic_net_mse, test_elastic_net_mse = elastic_net_regression(X_train, X_test, y_train, y_test)
-
 
 
 #
