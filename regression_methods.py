@@ -32,7 +32,7 @@ def linear_regression(X_train, X_test, y_train, y_test, outputs = False, normali
         print('Training test: MSE:', round(train_set_mse, 4), ', R2:', round(lin_reg.score(X_train, y_train), 4))
         print('Test test: MSE:', round(test_set_mse, 4), ', R2:', round(lin_reg.score(X_test, y_test), 4))
 
-    return train_set_mse, test_set_mse
+    return train_set_mse, test_set_mse, lin_reg.coef_
 
 # this method computes ridge regression using the optimal parameter computed with cross validation
 def ridge_regression(X_train, X_test, y_train, y_test, output = False, normalization = False):
@@ -112,7 +112,7 @@ def lasso_regression(X_train, X_test, y_train, y_test, output = True, normalizat
     # using cross validation to determine best value for lambda
     cv_ridge = LassoCV(alphas = LAMBDA_VALUES, max_iter = MAX_ITER_LASSO, cv = cv, normalize = normalization)
     cv_ridge.fit(X_train, y_train)
-    optimal_lambda = cv_ridge.alpha_
+    optimal_lambda = 0.2
 
     # fitting the lasso regression model with the optimal value of lambda found with cross validation
     lasso_model = Lasso(alpha = optimal_lambda).fit(X_train, y_train)
@@ -151,7 +151,39 @@ def lasso_regression(X_train, X_test, y_train, y_test, output = True, normalizat
 
     return train_set_mse, test_set_mse
 
-def adaptive_lasso_regression(X_train, X_test, y_train, y_test):
+def adaptive_lasso_regression(X_train, X_test, y_train, y_test, linear_reg_coef):
+    # constants definition
+    lambda_value = 0.1
+    n_lasso_iterations = 10
+    n_samples, n_features = X_train.shape
+    # creating a skeleton for the weights array
+    weights = np.ones(n_features)
+
+
+    # definition of the objective function of the adaptive lasso
+    adaptive_lasso_obj_fun = lambda beta: 1. / (2 * n_samples) * np.sum((y_train - np.dot(X_train, beta)) ** 2) + lambda_value * np.sum(np.sqrt(np.abs(beta)))
+
+    # iterating n_lasso_iterations times to fit lasso with progressively better weights
+    for iter in range(n_lasso_iterations):
+        # computing the weighted coefficients (at iter=1 they will remain unchanged)
+        weighted_X_train = X_train / weights[np.newaxis, :]
+
+        # fitting the lasso model with the current weighted X
+        lasso_model = Lasso(alpha = lambda_value, fit_intercept = False)
+        lasso_model.fit(weighted_X_train, y_train)
+
+        # computing the new values of the weights following the definition
+        coef_ = lasso_model.coef_ / weights
+        weights = 1 / (2 * np.sqrt(np.abs(coef_)) + np.finfo(float).eps)
+        
+        print(adaptive_lasso_obj_fun(coef_))  # should go down
+
+    print(np.mean((lasso_model.coef_ != 0.0) == (linear_reg_coef != 0.0)))
+
+    train_set_mse = mean_squared_error(y_train, lasso_model.predict(X_train))
+    test_set_mse = mean_squared_error(y_test, lasso_model.predict(X_test))
+
+    print(train_set_mse, test_set_mse)
 
     return
 
