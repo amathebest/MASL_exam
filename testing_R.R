@@ -21,7 +21,7 @@ X = model.matrix(MEDV ~ . -1, data = data)
 y = data$MEDV
 
 # fitting the Ridge Regression
-fit.ridge = glmnet(X, y, family = "gaussian", alpha = 0) # alpha=0 -> ridge. Default standardize=TRUE 
+fit.ridge = glmnet(X, y, family = "gaussian", alpha = 0) # alpha=0 -> ridge. Default standardize=TRUE
 
 plot(fit.ridge, xvar = "lambda", label = TRUE)
 # as log lambda increases, every coefficient converges to 0
@@ -33,7 +33,7 @@ round(fit.ridge$beta[,c(1,20,100)], 5)
 # To choose lambda, us cross-val
 ### Model Selection by Cross-Validation
 set.seed(123)
-cv.ridge <- cv.glmnet(X, y, alpha = 0, nfolds = 10) 
+cv.ridge <- cv.glmnet(X, y, alpha = 0, nfolds = 10)
 # in each cross-validation, for every lambda compute the ridge estimator and predict the value of the response on the 1/10 of the data left (error estimate)
 # at the end, for every lambda we have 10 values of RSS -> compute the mean among these values to complete the cross-validation
 # from here we want the minimum value of lambda, which sometimes can also be not ideal
@@ -105,3 +105,44 @@ plot(cv.lasso$lambda, cv.lasso$nzero, pch=20, col="red")
 lassopred.min <- predict(cv.lasso,s=cv.lasso$lambda.min,newx=x[-train,])
 mean((lassopred.min-y[-train])^2)
 mean((ridgepred.min-y[-train])^2)
+
+
+
+
+
+
+import numpy as np
+from sklearn.datasets import make_regression
+from sklearn.linear_model import Lasso
+
+X, y, coef = make_regression(n_samples=306, n_features=8000, n_informative=50,
+                    noise=0.1, shuffle=True, coef=True, random_state=42)
+
+X /= np.sum(X ** 2, axis=0)  # scale features
+
+alpha = 0.1
+
+g = lambda w: np.sqrt(np.abs(w))
+gprime = lambda w: 1. / (2. * np.sqrt(np.abs(w)) + np.finfo(float).eps)
+
+# Or another option:
+# ll = 0.01
+# g = lambda w: np.log(ll + np.abs(w))
+# gprime = lambda w: 1. / (ll + np.abs(w))
+
+n_samples, n_features = X.shape
+p_obj = lambda w: 1. / (2 * n_samples) * np.sum((y - np.dot(X, w)) ** 2) \
+                  + alpha * np.sum(g(w))
+
+weights = np.ones(n_features)
+n_lasso_iterations = 5
+
+for k in range(n_lasso_iterations):
+    X_w = X / weights[np.newaxis, :]
+    clf = Lasso(alpha=alpha, fit_intercept=False)
+    clf.fit(X_w, y)
+    coef_ = clf.coef_ / weights
+    weights = gprime(coef_)
+    print(p_obj(coef_))  # should go down
+
+print(np.mean((clf.coef_ != 0.0) == (coef != 0.0)))

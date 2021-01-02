@@ -13,10 +13,9 @@ LAMBDA_VALUES = 10**np.linspace(10, -2, 100)*0.5
 MAX_ITER_LASSO = 20000
 
 # this method computes linear regression
-def linear_regression(X_train, X_test, y_train, y_test, outputs = False, normalization = False):
+def linear_regression(X_train, X_test, y_train, y_test, outputs = False):
     # applying linear regression to the training set
-    lin_reg = LinearRegression(normalize = normalization)
-    lin_reg.fit(X_train, y_train)
+    lin_reg = LinearRegression().fit(X_train, y_train)
 
     # predicting y values of the training set
     y_train_predicted = lin_reg.predict(X_train)
@@ -35,9 +34,9 @@ def linear_regression(X_train, X_test, y_train, y_test, outputs = False, normali
     return train_set_mse, test_set_mse, lin_reg.coef_
 
 # this method computes ridge regression using the optimal parameter computed with cross validation
-def ridge_regression(X_train, X_test, y_train, y_test, output = False, normalization = False):
+def ridge_regression(X_train, X_test, y_train, y_test, output = False):
     # storing the values of the coefficients and the corresponding value of mse for each value of lambda
-    ridge = Ridge(normalize = normalization)
+    ridge = Ridge()
     coefficients = []
     mse_training = []
     for lambda_value in LAMBDA_VALUES:
@@ -51,12 +50,12 @@ def ridge_regression(X_train, X_test, y_train, y_test, output = False, normaliza
     cv = RepeatedKFold(n_splits = 10, n_repeats = 3, random_state = 1)
 
     # using cross validation to determine best value for lambda
-    cv_ridge = RidgeCV(alphas = LAMBDA_VALUES, cv = cv, scoring = 'neg_mean_squared_error', normalize = normalization)
+    cv_ridge = RidgeCV(alphas = LAMBDA_VALUES, cv = cv, scoring = 'neg_mean_squared_error')
     cv_ridge.fit(X_train, y_train)
     optimal_lambda = cv_ridge.alpha_
 
     # fitting the ridge regression model with the optimal value of lambda found with cross validation (minimum score value)
-    ridge_model = Ridge(alpha = optimal_lambda, normalize = normalization)
+    ridge_model = Ridge(alpha = optimal_lambda)
     ridge_model.fit(X_train, y_train)
 
     # predicting y values of the training set
@@ -94,9 +93,9 @@ def ridge_regression(X_train, X_test, y_train, y_test, output = False, normaliza
     return train_set_mse, test_set_mse
 
 # this method computes lasso regression using the optimal parameter computed with cross validation
-def lasso_regression(X_train, X_test, y_train, y_test, output = True, normalization = False):
+def lasso_regression(X_train, X_test, y_train, y_test, output = True):
     # storing the values of the coefficients and the corresponding value of mse for each value of lambda
-    lasso = Lasso(max_iter = MAX_ITER_LASSO, normalize = normalization)
+    lasso = Lasso(max_iter = MAX_ITER_LASSO)
     coefficients = []
     mse_training = []
     for lambda_value in LAMBDA_VALUES:
@@ -110,12 +109,12 @@ def lasso_regression(X_train, X_test, y_train, y_test, output = True, normalizat
     cv = RepeatedKFold(n_splits = 5, n_repeats = 3, random_state = 1)
 
     # using cross validation to determine best value for lambda
-    cv_ridge = LassoCV(alphas = LAMBDA_VALUES, max_iter = MAX_ITER_LASSO, cv = cv, normalize = normalization)
+    cv_ridge = LassoCV(alphas = LAMBDA_VALUES, max_iter = MAX_ITER_LASSO, cv = cv)
     cv_ridge.fit(X_train, y_train)
-    optimal_lambda = 0.2
+    optimal_lambda = cv_ridge.alpha_
 
     # fitting the lasso regression model with the optimal value of lambda found with cross validation
-    lasso_model = Lasso(alpha = optimal_lambda).fit(X_train, y_train)
+    lasso_model = Lasso(alpha = 0.4).fit(X_train, y_train)
 
     # predicting y values of the training set
     y_train_predicted = lasso_model.predict(X_train)
@@ -151,41 +150,62 @@ def lasso_regression(X_train, X_test, y_train, y_test, output = True, normalizat
 
     return train_set_mse, test_set_mse
 
-def adaptive_lasso_regression(X_train, X_test, y_train, y_test, linear_reg_coef):
+def adaptive_lasso_regression(X_train, X_test, y_train, y_test, linear_reg_coef, output):
     # constants definition
-    lambda_value = 0.1
-    n_lasso_iterations = 10
+    lambda_value = 0.05
+    n_lasso_iterations = 100
     n_samples, n_features = X_train.shape
     # creating a skeleton for the weights array
     weights = np.ones(n_features)
 
-
     # definition of the objective function of the adaptive lasso
-    adaptive_lasso_obj_fun = lambda beta: 1. / (2 * n_samples) * np.sum((y_train - np.dot(X_train, beta)) ** 2) + lambda_value * np.sum(np.sqrt(np.abs(beta)))
+    adaptive_lasso_obj_fun = lambda beta: 1 / (2 * n_samples) * np.linalg.norm(y_train - np.dot(X_train, beta), ord = 2)**2 + lambda_value * np.sum(np.abs(beta))
 
+    # fitting OLS to estimate the weights
+    lin_reg = LinearRegression().fit(X_train, y_train)
+    for idx, coefficient in enumerate(lin_reg.coef_):
+        if coefficient == 0:
+            weights[idx] = sys.maxsize
+        else:
+            weights[idx] = 1 / np.abs(coefficient) ** np.finfo(float).eps
+
+    fun_values = []
     # iterating n_lasso_iterations times to fit lasso with progressively better weights
     for iter in range(n_lasso_iterations):
-        # computing the weighted coefficients (at iter=1 they will remain unchanged)
-        weighted_X_train = X_train / weights[np.newaxis, :]
-
         # fitting the lasso model with the current weighted X
-        lasso_model = Lasso(alpha = lambda_value, fit_intercept = False)
-        lasso_model.fit(weighted_X_train, y_train)
+        lasso_model = Lasso(alpha = lambda_value)
+        lasso_model.fit(X_train, y_train)
 
-        # computing the new values of the weights following the definition
+        # computing the weighted coefficients and the new values of the weights following the definition
+        X_train = X_train / weights[np.newaxis, :]
         coef_ = lasso_model.coef_ / weights
-        weights = 1 / (2 * np.sqrt(np.abs(coef_)) + np.finfo(float).eps)
-        
-        print(adaptive_lasso_obj_fun(coef_))  # should go down
+        weights = 1 / np.sqrt(np.abs(coef_) + np.finfo(float).eps)
 
-    print(np.mean((lasso_model.coef_ != 0.0) == (linear_reg_coef != 0.0)))
+        fun_values.append(adaptive_lasso_obj_fun(lasso_model.coef_))
 
+    # computing analysis on performance
     train_set_mse = mean_squared_error(y_train, lasso_model.predict(X_train))
     test_set_mse = mean_squared_error(y_test, lasso_model.predict(X_test))
 
-    print(train_set_mse, test_set_mse)
 
-    return
+    if output:
+        print('Adaptive Lasso regression coefficients:', lasso_model.coef_)
+        print('Training test: MSE:', round(train_set_mse, 4), ', R2:', round(lasso_model.score(X_train, y_train), 4))
+        print('Test test: MSE:', round(test_set_mse, 4), ', R2:', round(lasso_model.score(X_test, y_test), 4))
+
+        # plot for the value of the objective function of the adaptive lasso
+        plt.plot(np.arange(0, n_lasso_iterations), fun_values)
+        plt.axis('tight')
+        plt.xlabel('Iterations')
+        plt.ylabel('Objective function')
+        plt.title('Objective function for Adaptive Lasso')
+        plt.show()
+
+
+    print(np.mean((lasso_model.coef_ != 0.0) == (linear_reg_coef != 0.0)))
+
+
+    return train_set_mse, test_set_mse, lasso_model.coef_
 
 # this method computes elastic net regression using the optimal parameter computed with cross validation
 def elastic_net_regression(X_train, X_test, y_train, y_test):
@@ -202,7 +222,7 @@ def elastic_net_regression(X_train, X_test, y_train, y_test):
 
 
     # fitting the elastic net regression model with the optimal value of lambda found with cross validation
-    elastic_net_model = ElasticNet(alpha = 0.005).fit(X_train, y_train)
+    elastic_net_model = ElasticNet(alpha = 0.4).fit(X_train, y_train)
 
     # predicting y values of the training set
     y_train_predicted = elastic_net_model.predict(X_train)

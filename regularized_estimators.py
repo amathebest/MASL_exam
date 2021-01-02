@@ -24,34 +24,36 @@ scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
-if True:
-    outputs = True
-    normalization = False
+output = True
+
+if False:
 
 
     # applying linear regression model and obtaining mse on train and test set
     print("Computing Linear Regression...")
-    training_linear_mse, test_linear_mse, true_beta = linear_regression(X_train, X_test, y_train, y_test, outputs, normalization)
-
-
-    adaptive_lasso_regression(X_train, X_test, y_train, y_test, true_beta)
-
-else:
-
-
+    training_linear_mse, test_linear_mse, ols_betas = linear_regression(X_train, X_test, y_train, y_test, output)
 
     # applying ridge regression model with optimal lambda and obtaining mse on train and test set
     print("\nComputing Ridge Regression with cross-validation...")
-    training_ridge_mse, test_ridge_mse = ridge_regression(X_train, X_test, y_train, y_test, outputs, normalization)
+    training_ridge_mse, test_ridge_mse = ridge_regression(X_train, X_test, y_train, y_test, output)
 
     # applying lasso regression model with optimal lambda and obtaining mse on train and test set
     print("\nComputing Lasso with cross-validation...")
-    training_lasso_mse, test_lasso_mse = lasso_regression(X_train, X_test, y_train, y_test, outputs, normalization)
+    training_lasso_mse, test_lasso_mse = lasso_regression(X_train, X_test, y_train, y_test, output)
 
+else:
+    # applying linear regression model and obtaining mse on train and test set
+    print("Computing Linear Regression...")
+    training_linear_mse, test_linear_mse, ols_betas = linear_regression(X_train, X_test, y_train, y_test, output)
 
+    # applying Adaptive lasso regression model and obtaining mse on train and test set
+    print("\nComputing Adaptive Lasso...")
+    training_lasso_mse, test_lasso_mse, alasso_betas = adaptive_lasso_regression(X_train, X_test, y_train, y_test, ols_betas, output)
+
+    print("\n")
     # applying elastic net regression model with optimal lambda and obtaining mse on train and test set
-    print("Computing Elastic Net with cross-validation...")
-    training_elastic_net_mse, test_elastic_net_mse = elastic_net_regression(X_train, X_test, y_train, y_test)
+    #print("Computing Elastic Net with cross-validation...")
+    #training_elastic_net_mse, test_elastic_net_mse = elastic_net_regression(X_train, X_test, y_train, y_test)
 
 
 #
