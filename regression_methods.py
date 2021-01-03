@@ -223,31 +223,30 @@ def adaptive_lasso_regression(X_train, X_test, y_train, y_test, linear_reg_coef,
 # this method computes elastic net regression using the optimal parameter computed with cross validation
 def elastic_net_regression(X_train, X_test, y_train, y_test, output):
     # storing the values of the coefficients and the corresponding value of mse for each value of lambda
-    elastic_net = ElasticNet()
-    coefficients = []
+    elastic_net_model = ElasticNet()
+    models = []
     mse_training = []
     for lambda_value in LAMBDA_VALUES:
-        elastic_net.set_params(alpha = lambda_value)
-        elastic_net.fit(X_train, y_train)
+        elastic_net_model.set_params(alpha = lambda_value)
+        elastic_net_model.fit(X_train, y_train)
         # storing the values for each value of lambda for the plots
-        coefficients.append(elastic_net.coef_)
-        mse_training.append(mean_squared_error(y_train, elastic_net.predict(X_train)))
+        models.append(elastic_net_model)
+        mse_training.append(mean_squared_error(y_train, elastic_net_model.predict(X_train)))
 
-
-    # fitting the elastic net regression model with the optimal value of lambda found with cross validation
-    elastic_net_model = ElasticNet(alpha = 0.4).fit(X_train, y_train)
+    # selecting the best model found with cross validation
+    best_model = models[mse_training.index(min(mse_training))]
 
     # predicting y values of the training set
-    y_train_predicted = elastic_net_model.predict(X_train)
+    y_train_predicted = best_model.predict(X_train)
     train_set_mse = mean_squared_error(y_train, y_train_predicted)
 
     # predicting y values of the training set
-    y_test_predicted = elastic_net_model.predict(X_test)
+    y_test_predicted = best_model.predict(X_test)
     test_set_mse = mean_squared_error(y_test, y_test_predicted)
 
     # output and analysis
-    print('Elastic Net regression coefficients:', elastic_net_model.coef_)
-    print('Training test: MSE:', round(train_set_mse, 4), ', R2:', round(elastic_net_model.score(X_train, y_train), 4))
-    print('Test test: MSE:', round(test_set_mse, 4), ', R2:', round(elastic_net_model.score(X_test, y_test), 4))
+    print('Elastic Net regression coefficients:', best_model.coef_)
+    print('Training test: MSE:', round(train_set_mse, 4), ', R2:', round(best_model.score(X_train, y_train), 4))
+    print('Test test: MSE:', round(test_set_mse, 4), ', R2:', round(best_model.score(X_test, y_test), 4))
 
     return train_set_mse, test_set_mse

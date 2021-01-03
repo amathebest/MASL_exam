@@ -44,7 +44,7 @@ if True:
     training_lasso_mse, test_lasso_mse, alasso_betas = adaptive_lasso_regression(X_train, X_test, y_train, y_test, ols_betas, output)
 
     # applying elastic net regression model with optimal lambda and obtaining mse on train and test set
-    print("Computing Elastic Net with cross-validation...")
+    print("\nComputing Elastic Net with cross-validation...")
     training_elastic_net_mse, test_elastic_net_mse = elastic_net_regression(X_train, X_test, y_train, y_test, output)
 
 else:
