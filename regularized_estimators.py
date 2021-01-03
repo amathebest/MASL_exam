@@ -17,7 +17,7 @@ X = data.drop(['MEDV'], axis = 1)
 y = data['MEDV']
 
 # separating the dataset into training set and test set (with seed)
-X_train, X_test, y_train, y_test = train_test_split(X, y, train_size = 0.20, random_state = 123)
+X_train, X_test, y_train, y_test = train_test_split(X, y, train_size = 0.25, random_state = 123) # try different splits and compare the results with a plot
 
 # scaling the covariates in order to make them uniform
 scaler = StandardScaler()
@@ -29,7 +29,7 @@ output = True
 if True:
     # applying linear regression model and obtaining mse on train and test set
     print("Computing Linear Regression...")
-    training_linear_mse, test_linear_mse, ols_betas = linear_regression(X_train, X_test, y_train, y_test, output)
+    training_linear_mse, test_linear_mse = linear_regression(X_train, X_test, y_train, y_test, output)
 
     # applying ridge regression model with optimal lambda and obtaining mse on train and test set
     print("\nComputing Ridge Regression with cross-validation...")
@@ -41,7 +41,7 @@ if True:
 
     # applying Adaptive lasso regression model and obtaining mse on train and test set
     print("\nComputing Adaptive Lasso...")
-    training_lasso_mse, test_lasso_mse, alasso_betas = adaptive_lasso_regression(X_train, X_test, y_train, y_test, ols_betas, output)
+    training_lasso_mse, test_lasso_mse = adaptive_lasso_regression(X_train, X_test, y_train, y_test, output)
 
     # applying elastic net regression model with optimal lambda and obtaining mse on train and test set
     print("\nComputing Elastic Net with cross-validation...")

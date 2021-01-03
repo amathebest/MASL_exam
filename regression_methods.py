@@ -7,12 +7,12 @@ import statsmodels.api as sm
 from sklearn.model_selection import RepeatedKFold
 from sklearn.metrics import mean_squared_error
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
-from sklearn.linear_model import RidgeCV, LassoCV
+from sklearn.linear_model import RidgeCV, LassoCV, ElasticNetCV
 
 
 # constants declaration
 LAMBDA_VALUES = 10**np.linspace(10, -2, 100)*0.5
-MAX_ITER_LASSO = 20000
+MAX_ITER = 20000
 
 # this method computes linear regression
 def linear_regression(X_train, X_test, y_train, y_test, outputs = False):
@@ -33,7 +33,7 @@ def linear_regression(X_train, X_test, y_train, y_test, outputs = False):
         print('Training test: MSE:', round(train_set_mse, 4), ', R2:', round(lin_reg.score(X_train, y_train), 4))
         print('Test test: MSE:', round(test_set_mse, 4), ', R2:', round(lin_reg.score(X_test, y_test), 4))
 
-    return train_set_mse, test_set_mse, lin_reg.coef_
+    return train_set_mse, test_set_mse
 
 # this method computes ridge regression using the optimal parameter computed with cross validation
 def ridge_regression(X_train, X_test, y_train, y_test, output = False):
@@ -98,7 +98,7 @@ def ridge_regression(X_train, X_test, y_train, y_test, output = False):
 # this method computes lasso regression using the optimal parameter computed with cross validation
 def lasso_regression(X_train, X_test, y_train, y_test, output = True):
     # storing the values of the coefficients and the corresponding value of mse for each value of lambda
-    lasso = Lasso(max_iter = MAX_ITER_LASSO)
+    lasso = Lasso(max_iter = MAX_ITER)
     coefficients = []
     mse_training = []
     for lambda_value in LAMBDA_VALUES:
@@ -112,9 +112,9 @@ def lasso_regression(X_train, X_test, y_train, y_test, output = True):
     cv = RepeatedKFold(n_splits = 10, n_repeats = 3, random_state = 1)
 
     # using cross validation to determine best value for lambda
-    cv_ridge = LassoCV(alphas = LAMBDA_VALUES, max_iter = MAX_ITER_LASSO, cv = cv)
-    cv_ridge.fit(X_train, y_train)
-    optimal_lambda = cv_ridge.alpha_
+    cv_lasso = LassoCV(alphas = LAMBDA_VALUES, max_iter = MAX_ITER, cv = cv)
+    cv_lasso.fit(X_train, y_train)
+    optimal_lambda = cv_lasso.alpha_
 
     # fitting the lasso regression model with the optimal value of lambda found with cross validation
     lasso_model = Lasso(alpha = optimal_lambda).fit(X_train, y_train)
@@ -155,7 +155,7 @@ def lasso_regression(X_train, X_test, y_train, y_test, output = True):
     return train_set_mse, test_set_mse
 
 # this method computes adaptive lasso regression with weights estimated using OLS
-def adaptive_lasso_regression(X_train, X_test, y_train, y_test, linear_reg_coef, output):
+def adaptive_lasso_regression(X_train, X_test, y_train, y_test, output):
     # constants definition
     lambda_value = 0.05
     n_lasso_iterations = 100
@@ -218,35 +218,64 @@ def adaptive_lasso_regression(X_train, X_test, y_train, y_test, linear_reg_coef,
         plt.title('Objective function for Adaptive Lasso')
         plt.show()
 
-    return train_set_mse, test_set_mse, lasso_model.coef_
+    return train_set_mse, test_set_mse
 
 # this method computes elastic net regression using the optimal parameter computed with cross validation
 def elastic_net_regression(X_train, X_test, y_train, y_test, output):
     # storing the values of the coefficients and the corresponding value of mse for each value of lambda
-    elastic_net_model = ElasticNet()
-    models = []
+    elastic_net = ElasticNet(max_iter = MAX_ITER)
+    coefficients = []
     mse_training = []
     for lambda_value in LAMBDA_VALUES:
-        elastic_net_model.set_params(alpha = lambda_value)
-        elastic_net_model.fit(X_train, y_train)
+        elastic_net.set_params(alpha = lambda_value)
+        elastic_net.fit(X_train, y_train)
         # storing the values for each value of lambda for the plots
-        models.append(elastic_net_model)
-        mse_training.append(mean_squared_error(y_train, elastic_net_model.predict(X_train)))
+        coefficients.append(elastic_net.coef_)
+        mse_training.append(mean_squared_error(y_train, elastic_net.predict(X_train)))
 
-    # selecting the best model found with cross validation
-    best_model = models[mse_training.index(min(mse_training))]
+    # definel model evaluation method
+    cv = RepeatedKFold(n_splits = 10, n_repeats = 3, random_state = 1)
+
+    # using cross validation to determine best value for lambda
+    cv_elastic_net = ElasticNetCV(alphas = LAMBDA_VALUES, max_iter = MAX_ITER, cv = cv)
+    cv_elastic_net.fit(X_train, y_train)
+    optimal_lambda = cv_elastic_net.alpha_
+    optimal_l1_ratio = cv_elastic_net.l1_ratio_
+
+    # fitting the lasso regression model with the optimal value of lambda found with cross validation
+    elastic_net_model = ElasticNet(alpha = optimal_lambda, l1_ratio = optimal_l1_ratio).fit(X_train, y_train)
 
     # predicting y values of the training set
-    y_train_predicted = best_model.predict(X_train)
+    y_train_predicted = elastic_net_model.predict(X_train)
     train_set_mse = mean_squared_error(y_train, y_train_predicted)
 
     # predicting y values of the training set
-    y_test_predicted = best_model.predict(X_test)
+    y_test_predicted = elastic_net_model.predict(X_test)
     test_set_mse = mean_squared_error(y_test, y_test_predicted)
 
-    # output and analysis
-    print('Elastic Net regression coefficients:', best_model.coef_)
-    print('Training test: MSE:', round(train_set_mse, 4), ', R2:', round(best_model.score(X_train, y_train), 4))
-    print('Test test: MSE:', round(test_set_mse, 4), ', R2:', round(best_model.score(X_test, y_test), 4))
+    if output:
+        # output and analysis
+        print('Elastic Net regression coefficients:', elastic_net_model.coef_)
+        print('Optimal lambda:', optimal_lambda)
+        print('Training test: MSE:', round(train_set_mse, 4), ', R2:', round(elastic_net_model.score(X_train, y_train), 4))
+        print('Test test: MSE:', round(test_set_mse, 4), ', R2:', round(elastic_net_model.score(X_test, y_test), 4))
+
+        # plot that visualizes the coefficients getting shrinked
+        ax = plt.gca()
+        ax.plot(np.log(LAMBDA_VALUES), coefficients)
+        plt.axis('tight')
+        plt.xlabel('log(λ)')
+        plt.ylabel('Coefficients')
+        plt.title('Parameters shrinkage')
+        plt.show()
+
+        # plot for optimal value of lambda obtained with cross validation
+        plt.plot(np.log(LAMBDA_VALUES), mse_training)
+        plt.vlines(x = np.log(optimal_lambda), ymin = 10, ymax = 100, color = 'red', zorder = 2)
+        plt.axis('tight')
+        plt.xlabel('log(λ)')
+        plt.ylabel('MSE')
+        plt.title('Optimal value of λ using cross-validation')
+        plt.show()
 
     return train_set_mse, test_set_mse
