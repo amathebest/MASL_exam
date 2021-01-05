@@ -80,9 +80,7 @@ mean((ridgepred.1se-y[-train])^2)
 
 #Now we fit the models using the lasso estimator
 #in glmnet default `alpha=1`
-
-
-fit.lasso <- glmnet(x,y, alpha = 1)
+fit.lasso <- glmnet(X, y, alpha = 1)
 plot(fit.lasso, xvar = "lambda", label=TRUE)
 plot(fit.lasso, xvar = "lambda", label=TRUE, ylim = c(-5,5))
 names(fit.lasso)
@@ -94,7 +92,7 @@ fit.lasso$lambda[28]
 fit.lasso$beta[,28]
 
 # cross-validation on the train set
-cv.lasso <- cv.glmnet(x[train,], y[train], nfolds = 10)
+cv.lasso <- cv.glmnet(X[train,], y[train], nfolds = 10)
 plot(cv.lasso)
 coef(cv.lasso) # corresp to lambda.1se
 coef(cv.lasso, s=cv.lasso$lambda.min) # corresp to lambda.min
@@ -102,47 +100,9 @@ coef(cv.lasso, s=cv.lasso$lambda.min) # corresp to lambda.min
 cv.lasso$nzero # non-zero coeff
 plot(cv.lasso$lambda, cv.lasso$nzero, pch=20, col="red")
 
-lassopred.min <- predict(cv.lasso,s=cv.lasso$lambda.min,newx=x[-train,])
+lassopred.min <- predict(cv.lasso, s = cv.lasso$lambda.min, newx = X[-train,])
 mean((lassopred.min-y[-train])^2)
 mean((ridgepred.min-y[-train])^2)
 
 
 
-
-
-
-import numpy as np
-from sklearn.datasets import make_regression
-from sklearn.linear_model import Lasso
-
-X, y, coef = make_regression(n_samples=306, n_features=8000, n_informative=50,
-                    noise=0.1, shuffle=True, coef=True, random_state=42)
-
-X /= np.sum(X ** 2, axis=0)  # scale features
-
-alpha = 0.1
-
-g = lambda w: np.sqrt(np.abs(w))
-gprime = lambda w: 1. / (2. * np.sqrt(np.abs(w)) + np.finfo(float).eps)
-
-# Or another option:
-# ll = 0.01
-# g = lambda w: np.log(ll + np.abs(w))
-# gprime = lambda w: 1. / (ll + np.abs(w))
-
-n_samples, n_features = X.shape
-p_obj = lambda w: 1. / (2 * n_samples) * np.sum((y - np.dot(X, w)) ** 2) \
-                  + alpha * np.sum(g(w))
-
-weights = np.ones(n_features)
-n_lasso_iterations = 5
-
-for k in range(n_lasso_iterations):
-    X_w = X / weights[np.newaxis, :]
-    clf = Lasso(alpha=alpha, fit_intercept=False)
-    clf.fit(X_w, y)
-    coef_ = clf.coef_ / weights
-    weights = gprime(coef_)
-    print(p_obj(coef_))  # should go down
-
-print(np.mean((clf.coef_ != 0.0) == (coef != 0.0)))
