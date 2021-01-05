@@ -75,21 +75,23 @@ def ridge_regression(X_train, X_test, y_train, y_test, output = False):
         print('Test test: MSE:', round(test_set_mse, 4), ', R2:', round(ridge_model.score(X_test, y_test), 4))
 
         # plot that visualizes the coefficients getting shrinked
-        ax = plt.gca()
-        ax.plot(np.log(LAMBDA_VALUES), coefficients)
+        ax_coef = plt.gca()
+        ax_coef.plot(np.log(LAMBDA_VALUES), coefficients)
+        plt.vlines(x = np.log(optimal_lambda), ymin = np.min(coefficients), ymax = np.max(coefficients), linestyles = 'dashed', color = 'black')
         plt.axis('tight')
         plt.xlabel('log(λ)')
         plt.ylabel('Coefficients')
-        plt.title('Parameters shrinkage')
+        plt.title('Ridge parameters shrinkage')
         plt.show()
 
         # plot for optimal value of lambda obtained with cross validation
-        plt.plot(np.log(LAMBDA_VALUES), mse_training)
-        plt.vlines(x = np.log(optimal_lambda), ymin = 15, ymax = 90, color = 'red', zorder = 2)
+        ax_lam = plt.gca()
+        ax_lam.plot(np.log(LAMBDA_VALUES), mse_training)
+        plt.vlines(x = np.log(optimal_lambda), ymin = np.min(mse_training), ymax = np.max(mse_training), linestyles = 'dashed', color = 'black')
         plt.axis('tight')
         plt.xlabel('log(λ)')
         plt.ylabel('MSE')
-        plt.title('Optimal value of λ using cross-validation')
+        plt.title('Ridge Regression optimal value of λ using cross-validation')
         plt.show()
 
     return train_set_mse, test_set_mse
@@ -138,19 +140,20 @@ def lasso_regression(X_train, X_test, y_train, y_test, output = False):
         # plot that visualizes the coefficients getting shrinked
         ax = plt.gca()
         ax.plot(np.log(LAMBDA_VALUES), coefficients)
+        plt.vlines(x = np.log(optimal_lambda), ymin = np.min(coefficients), ymax = np.max(coefficients), linestyles = 'dashed', color = 'black')
         plt.axis('tight')
         plt.xlabel('log(λ)')
         plt.ylabel('Coefficients')
-        plt.title('Parameters shrinkage')
+        plt.title('Lasso parameters shrinkage')
         plt.show()
 
         # plot for optimal value of lambda obtained with cross validation
         plt.plot(np.log(LAMBDA_VALUES), mse_training)
-        plt.vlines(x = np.log(optimal_lambda), ymin = 10, ymax = 100, color = 'red', zorder = 2)
+        plt.vlines(x = np.log(optimal_lambda), ymin = np.min(mse_training), ymax = np.max(mse_training), color = 'black', linestyles = 'dashed')
         plt.axis('tight')
         plt.xlabel('log(λ)')
         plt.ylabel('MSE')
-        plt.title('Optimal value of λ using cross-validation')
+        plt.title('Lasso optimal value of λ using cross-validation')
         plt.show()
 
     return train_set_mse, test_set_mse
@@ -225,10 +228,12 @@ def adaptive_lasso_regression(X_train, X_test, y_train, y_test, output = False):
             # plot that visualizes the coefficients getting shrinked
             ax = plt.gca()
             ax.plot(np.log(LAMBDA_VALUES), coefficients)
+            plt.vlines(x = np.log(lambda_value), ymin = np.min(coefficients), ymax = np.max(coefficients), color = 'black', linestyles = 'dashed')
             plt.axis('tight')
             plt.xlabel('log(λ)')
             plt.ylabel('Coefficients')
-            plt.title('Parameters shrinkage')
+            plt.title('Adaptive Lasso parameters shrinkage')
+            plt.legend(['λ = ' + str(lambda_value)])
             plt.show()
 
             # plot that visualizes how the objective function of the adaptive lasso changes with lambda
@@ -245,7 +250,7 @@ def adaptive_lasso_regression(X_train, X_test, y_train, y_test, output = False):
     ax.plot(adalasso_lambdas, test_mse, color = 'lightblue', label = 'Test MSE')
     plt.xlabel('λ')
     plt.ylabel('MSE')
-    plt.title('MSE values for different values of λ')
+    plt.title('Adaptive Lasso MSE values for different values of λ')
     plt.legend()
     plt.show()
 
@@ -267,7 +272,7 @@ def testing():
         else:
             weights[idx] = 1 / np.abs(estimates.params[idx+1])**np.finfo(float).eps
         idx += 1
-    print(weights)
+
     # we apply weights to the covariates
     weighted_X_train = X_train / weights[np.newaxis, :]
     weighted_X_test = X_test / weights[np.newaxis, :]
@@ -346,19 +351,20 @@ def elastic_net_regression(X_train, X_test, y_train, y_test, output):
         # plot that visualizes the coefficients getting shrinked
         ax = plt.gca()
         ax.plot(np.log(LAMBDA_VALUES), coefficients)
+        plt.vlines(x = np.log(optimal_lambda), ymin = np.min(coefficients), ymax = np.max(coefficients), linestyles = 'dashed', color = 'black')
         plt.axis('tight')
         plt.xlabel('log(λ)')
         plt.ylabel('Coefficients')
-        plt.title('Parameters shrinkage')
+        plt.title('Elastic Net parameters shrinkage')
         plt.show()
 
         # plot for optimal value of lambda obtained with cross validation
         plt.plot(np.log(LAMBDA_VALUES), mse_training)
-        plt.vlines(x = np.log(optimal_lambda), ymin = 10, ymax = 100, color = 'red', zorder = 2)
+        plt.vlines(x = np.log(optimal_lambda), ymin = np.min(mse_training), ymax = np.max(mse_training), linestyles = 'dashed', color = 'black')
         plt.axis('tight')
         plt.xlabel('log(λ)')
         plt.ylabel('MSE')
-        plt.title('Optimal value of λ using cross-validation')
+        plt.title("Elastic Net optimal value of λ using cross-validation")
         plt.show()
 
     return train_set_mse, test_set_mse

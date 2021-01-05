@@ -1,4 +1,5 @@
 import pandas as pd
+import matplotlib.pyplot as plt
 
 # preprocessing libraries
 from sklearn.model_selection import train_test_split
@@ -16,8 +17,10 @@ data.columns = colnames
 X = data.drop(['MEDV'], axis = 1)
 y = data['MEDV']
 
+output = True
+
 # separating the dataset into training set and test set (with seed)
-X_train, X_test, y_train, y_test = train_test_split(X, y, train_size = 0.25, random_state = 123) # try different splits and compare the results with a plot
+X_train, X_test, y_train, y_test = train_test_split(X, y, train_size = 0.75, random_state = 123)
 
 # scaling the covariates in order to make them uniform
 scaler = StandardScaler()
@@ -26,23 +29,23 @@ X_test = scaler.transform(X_test)
 
 # applying Linear Regression model and obtaining mse on train and test set
 print("Computing Linear Regression...")
-training_linear_mse, test_linear_mse = linear_regression(X_train, X_test, y_train, y_test, True)
+training_linear_mse, test_linear_mse = linear_regression(X_train, X_test, y_train, y_test, output)
 
 # applying Ridge Regression model with optimal lambda and obtaining mse on train and test set
-#print("\nComputing Ridge Regression with cross-validation...")
-#training_ridge_mse, test_ridge_mse = ridge_regression(X_train, X_test, y_train, y_test, True)
+print("\nComputing Ridge Regression with cross-validation...")
+training_ridge_mse, test_ridge_mse = ridge_regression(X_train, X_test, y_train, y_test, output)
 
 # applying Lasso regression model with optimal lambda and obtaining mse on train and test set
-#print("\nComputing Lasso with cross-validation...")
-#training_lasso_mse, test_lasso_mse = lasso_regression(X_train, X_test, y_train, y_test, True)
+print("\nComputing Lasso with cross-validation...")
+training_lasso_mse, test_lasso_mse = lasso_regression(X_train, X_test, y_train, y_test, output)
 
 # applying Adaptive lasso regression model and obtaining mse on train and test set
 print("\nComputing Adaptive Lasso...")
-training_adalasso_mse, test_adalasso_mse = adaptive_lasso_regression(X_train, X_test, y_train, y_test, True)
+training_adalasso_mse, test_adalasso_mse = adaptive_lasso_regression(X_train, X_test, y_train, y_test, output)
 
 # applying Elastic Net regression model with optimal lambda and obtaining mse on train and test set
-#print("\nComputing Elastic Net with cross-validation...")
-#training_elastic_net_mse, test_elastic_net_mse = elastic_net_regression(X_train, X_test, y_train, y_test, True)
+print("\nComputing Elastic Net with cross-validation...")
+training_elastic_net_mse, test_elastic_net_mse = elastic_net_regression(X_train, X_test, y_train, y_test, output)
 
 
 #
