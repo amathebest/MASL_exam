@@ -28,6 +28,7 @@ scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
+
 # applying Linear Regression model and obtaining mse on train and test set
 print("Computing Linear Regression...")
 training_linear_mse, test_linear_mse = linear_regression(X_train, X_test, y_train, y_test, outputs)

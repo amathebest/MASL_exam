@@ -239,7 +239,8 @@ def adaptive_lasso_regression(X_train, X_test, y_train, y_test, outputs = False,
         test_mse.append(test_set_mse)
 
         if outputs:
-            print('Adaptive Lasso regression coefficients:', np.round(adalasso_model.coef_ / weights, 4))
+            print('\nAdaptive Lasso regression coefficients:', np.round(adalasso_model.coef_ / weights, 4))
+            print('Lambda:', lambda_value)
             print('Training test: MSE:', round(train_set_mse, 4), ', R2:', round(train_set_score, 4))
             print('Test test: MSE:', round(test_set_mse, 4), ', R2:', round(test_set_score, 4))
 
